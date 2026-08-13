@@ -10,5 +10,8 @@
 		"resolveJsonModule": true
 	},
 	"include": ["src/**/*.ts", "src/**/*.tsx"],
-	"exclude": ["node_modules", "dist", "prisma.config.ts", "prisma/**"]
+	"exclude": ["node_modules", "dist", "prisma.config.ts", "prisma/**"],
+	"ts-node": {
+		"files": true
+	}
 }

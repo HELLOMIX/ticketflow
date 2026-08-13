@@ -1,4 +1,8 @@
-import { getPopularMovies, type TmdbCatalogMovie } from "./tmdb.client";
+import {
+	getPopularMovies,
+	searchMovies,
+	type TmdbCatalogMovie,
+} from "./tmdb.client";
 
 export type CatalogEvent = {
 	id: string;
@@ -50,10 +54,8 @@ function formatDate(date?: string): { dateLabel: string; dateShort: string } {
 	};
 }
 
-export async function getCatalogEvents(): Promise<CatalogEvent[]> {
-	const movies = await getPopularMovies({ page: 1, language: "pt-BR" });
-
-	return movies.slice(0, 8).map((movie, index) => {
+function mapMoviesToCatalogEvents(movies: TmdbCatalogMovie[]): CatalogEvent[] {
+	return movies.map((movie, index) => {
 		const formattedDate = formatDate(movie.releaseDate);
 		const price = 32 + index * 8;
 
@@ -83,4 +85,17 @@ export async function getCatalogEvents(): Promise<CatalogEvent[]> {
 			],
 		};
 	});
+}
+
+export async function getCatalogEvents(): Promise<CatalogEvent[]> {
+	const movies = await getPopularMovies({ page: 1, language: "pt-BR" });
+	return mapMoviesToCatalogEvents(movies.slice(0, 8));
+}
+
+export async function searchCatalogEvents(
+	query: string,
+): Promise<CatalogEvent[]> {
+	if (!query.trim()) return getCatalogEvents();
+	const movies = await searchMovies(query, { page: 1, language: "pt-BR" });
+	return mapMoviesToCatalogEvents(movies.slice(0, 12));
 }

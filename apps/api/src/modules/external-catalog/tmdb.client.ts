@@ -116,3 +116,31 @@ export async function getTmdbConfiguration() {
 		images: { secure_base_url: string; poster_sizes: string[] };
 	}>("/configuration");
 }
+
+export async function searchMovies(
+	query: string,
+	params: { language?: string; page?: number } = {},
+): Promise<TmdbCatalogMovie[]> {
+	const response = await getTmdb<TmdbPaginatedResponse<TmdbMovie>>(
+		"/search/movie",
+		{
+			query,
+			language: params.language ?? "pt-BR",
+			page: params.page ?? 1,
+		},
+	);
+
+	return response.results.map((movie) => ({
+		id: movie.id,
+		title: movie.title,
+		description: movie.overview || "Sinopse indisponível no momento.",
+		releaseDate: movie.release_date,
+		posterPath: movie.poster_path
+			? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+			: undefined,
+		backdropPath: movie.backdrop_path
+			? `https://image.tmdb.org/t/p/w1280${movie.backdrop_path}`
+			: undefined,
+		popularity: movie.popularity,
+	}));
+}
