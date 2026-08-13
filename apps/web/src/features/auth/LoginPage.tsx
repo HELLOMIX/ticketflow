@@ -1,54 +1,28 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
-export type AppRole = "CLIENT" | "ORGANIZER" | "GATE";
-
-export type AppUser = {
-	id: string;
-	name: string;
-	email: string;
-	password: string;
-	cpf?: string;
-	role: AppRole;
-	phone?: string;
-	birthDate?: string;
-	profilePictureUrl?: string;
-	assignedEventIds?: string[];
-};
-
-type LoginPageProps = {
-	users: AppUser[];
-	onLogin: (user: AppUser) => void;
-};
-
-const roleLabels: Record<AppRole, string> = {
-	CLIENT: "Cliente",
-	ORGANIZER: "Organizador",
-	GATE: "Porteiro",
-};
-
-export default function LoginPage({ users, onLogin }: LoginPageProps) {
+export default function LoginPage() {
 	const navigate = useNavigate();
-	const [email, setEmail] = useState("cliente@ticketflow.com");
+	const { login } = useAuth();
+	const [email, setEmail] = useState("cliente1@ticketflow.com");
 	const [password, setPassword] = useState("123456");
 	const [error, setError] = useState("");
+	const [submitting, setSubmitting] = useState(false);
 
-	function handleSubmit(event: FormEvent) {
+	async function handleSubmit(event: FormEvent) {
 		event.preventDefault();
-		const matchedUser = users.find(
-			(user) =>
-				user.email.toLowerCase() === email.toLowerCase() &&
-				user.password === password,
-		);
+		setSubmitting(true);
+		const result = await login(email, password);
+		setSubmitting(false);
 
-		if (!matchedUser) {
-			setError("E-mail ou senha inválidos.");
+		if (!result.ok) {
+			setError(result.message);
 			return;
 		}
 
 		setError("");
-		onLogin(matchedUser);
-		navigate(`/${matchedUser.role.toLowerCase()}`);
+		navigate(`/${result.user.role.toLowerCase()}`);
 	}
 
 	return (
@@ -71,7 +45,7 @@ export default function LoginPage({ users, onLogin }: LoginPageProps) {
 						<input
 							type="email"
 							value={email}
-							onChange={(event) => setEmail(event.target.value)}
+							onChange={(e) => setEmail(e.target.value)}
 							className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white placeholder:text-neutral-500"
 							placeholder="seu@email.com"
 						/>
@@ -84,9 +58,7 @@ export default function LoginPage({ users, onLogin }: LoginPageProps) {
 						<input
 							type="password"
 							value={password}
-							onChange={(event) =>
-								setPassword(event.target.value)
-							}
+							onChange={(e) => setPassword(e.target.value)}
 							className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white placeholder:text-neutral-500"
 							placeholder="••••••••"
 						/>
@@ -96,23 +68,42 @@ export default function LoginPage({ users, onLogin }: LoginPageProps) {
 
 					<button
 						type="submit"
-						className="w-full rounded-xl bg-amber-400 px-4 py-3 text-sm font-bold text-neutral-950 transition hover:bg-amber-300"
+						disabled={submitting}
+						className="w-full rounded-xl bg-amber-400 px-4 py-3 text-sm font-bold text-neutral-950 transition hover:bg-amber-300 disabled:opacity-50"
 					>
-						Entrar
+						{submitting ? "Entrando..." : "Entrar"}
 					</button>
 				</form>
 
 				<div className="mt-4 rounded-xl border border-neutral-800 bg-neutral-950/70 p-3 text-xs text-neutral-300">
-					<p className="mb-2 font-semibold text-white">Contas demo</p>
+					<p className="mb-2 font-semibold text-white">
+						Contas de teste (seed)
+					</p>
 					<ul className="space-y-1">
-						{users.map((user) => (
-							<li key={user.id}>
-								<span className="font-semibold text-amber-300">
-									{roleLabels[user.role]}
-								</span>{" "}
-								· {user.email} / {user.password}
-							</li>
-						))}
+						<li>
+							<span className="font-semibold text-amber-300">
+								Organizador
+							</span>{" "}
+							· organizador@ticketflow.com / 123456
+						</li>
+						<li>
+							<span className="font-semibold text-amber-300">
+								Cliente
+							</span>{" "}
+							· cliente1@ticketflow.com / 123456
+						</li>
+						<li>
+							<span className="font-semibold text-amber-300">
+								Cliente
+							</span>{" "}
+							· cliente2@ticketflow.com / 123456
+						</li>
+						<li>
+							<span className="font-semibold text-amber-300">
+								Portaria
+							</span>{" "}
+							· portaria@ticketflow.com / 123456
+						</li>
 					</ul>
 				</div>
 

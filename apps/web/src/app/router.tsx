@@ -23,125 +23,24 @@ import OrganizerProfileScreen from "../features/organizer/OrganizerProfileScreen
 import ValidateTicketScreen from "../features/gate/ValidateTicketScreen";
 import QrScanScreen from "../features/gate/QrScanScreen";
 import ValidationResultScreen from "../features/gate/ValidationResultScreen";
-import {
-	EVENTS,
-	MY_TICKETS,
-	ORGANIZER_EVENTS,
-	type EventItem,
-} from "../components/mockData";
-import LoginPage, {
-	type AppRole,
-	type AppUser,
-} from "../features/auth/LoginPage";
+import { EVENTS, type EventItem } from "../components/mockData";
+import LoginPage from "../features/auth/LoginPage";
 import RegisterPage from "../features/auth/RegisterPage";
 import GateRegistrationPage from "../features/auth/GateRegistrationPage";
+import { useAuth, type AppRole } from "../features/auth/AuthContext";
+import { fetchPublishedEvents } from "../features/events/eventsApi";
+import { releaseSeats } from "../features/checkout/checkoutApi";
+import SharedTicketScreen from "../features/my-tickets/SharedTicketScreen";
+import {
+	fetchTicketById,
+	type ApiTicket,
+} from "../features/my-tickets/ticketsApi";
+import { validateByCode, validateByQrToken } from "../features/gate/gateApi";
 
-const DEMO_USERS: AppUser[] = [
-	{
-		id: "client-demo",
-		name: "Maria Cliente",
-		email: "cliente@ticketflow.com",
-		password: "123456",
-		role: "CLIENT",
-		cpf: "123.456.789-00",
-		phone: "(11) 99999-0001",
-		birthDate: "1994-06-10",
-	},
-	{
-		id: "organizer-demo",
-		name: "Tiago Organizador",
-		email: "organizador@ticketflow.com",
-		password: "123456",
-		role: "ORGANIZER",
-		cpf: "987.654.321-00",
-		phone: "(11) 98888-2222",
-		birthDate: "1988-02-15",
-	},
-	{
-		id: "gate-demo",
-		name: "Ana Porteira",
-		email: "porteiro@ticketflow.com",
-		password: "123456",
-		role: "GATE",
-		cpf: "456.123.789-10",
-		phone: "(11) 97777-3333",
-		birthDate: "1992-11-28",
-		assignedEventIds: ["the-weeknd"],
-	},
-];
-
-const GATE_TICKETS = [
-	{
-		code: "TKT-WKND-2401",
-		eventId: "the-weeknd",
-		eventTitle: "The Weeknd",
-		ticketType: "Pista Premium",
-		holderName: "Maria Cliente",
-		status: "valid" as const,
-	},
-	{
-		code: "TKT-USED-9876",
-		eventId: "the-weeknd",
-		eventTitle: "The Weeknd",
-		ticketType: "Pista Premium",
-		holderName: "Lucas Almeida",
-		status: "used" as const,
-	},
-	{
-		code: "TKT-WRONG-EVT",
-		eventId: "dune",
-		eventTitle: "Dune: Parte Três",
-		ticketType: "Inteira",
-		holderName: "Catarina Reis",
-		status: "valid" as const,
-	},
-	{
-		code: "TKT-INVALID-99",
-		eventId: "the-weeknd",
-		eventTitle: "The Weeknd",
-		ticketType: "Pista Premium",
-		holderName: "Visitante",
-		status: "invalid" as const,
-	},
-];
-
-function resolveGateValidation(code: string, currentUser: AppUser | null) {
-	const normalized = code.trim();
-	const match = GATE_TICKETS.find(
-		(item) => item.code.toLowerCase() === normalized.toLowerCase(),
-	);
-
-	if (!match) {
-		return {
-			status: "invalid" as const,
-			ticket: { code: normalized || "—" },
-		};
-	}
-
-	if (currentUser?.role === "GATE") {
-		const assigned = currentUser.assignedEventIds ?? [];
-		if (!assigned.includes(match.eventId)) {
-			return {
-				status: "wrong_event" as const,
-				ticket: {
-					eventTitle: match.eventTitle,
-					ticketType: match.ticketType,
-					holderName: match.holderName,
-					code: match.code,
-				},
-			};
-		}
-	}
-
-	return {
-		status: match.status,
-		ticket: {
-			eventTitle: match.eventTitle,
-			ticketType: match.ticketType,
-			holderName: match.holderName,
-			code: match.code,
-		},
-	};
+function normalizeGateStatus(
+	status: string,
+): "valid" | "used" | "invalid" | "wrong_event" {
+	return status.toLowerCase() as "valid" | "used" | "invalid" | "wrong_event";
 }
 
 function getRoleRoot(role: AppRole) {
@@ -150,74 +49,8 @@ function getRoleRoot(role: AppRole) {
 	return "/gate";
 }
 
-function normalizeCatalogEvent(item: any): EventItem {
-	const typeMap: Record<string, EventItem["type"]> = {
-		MOVIE: "cinema",
-		SHOW: "show",
-		THEATER: "theater",
-		FESTIVAL: "festival",
-		OTHER: "show",
-	};
-
-	const normalizedType =
-		typeMap[item.eventType ?? item.type ?? "SHOW"] ?? "show";
-
-	return {
-		id: String(item.id ?? crypto.randomUUID()),
-		type: normalizedType,
-		title: item.title ?? "Evento",
-		venue: item.venue ?? "Cinema TMDb",
-		city: item.city ?? "São Paulo",
-		dateLabel: item.dateLabel ?? "Em breve",
-		dateShort: item.dateShort ?? "Em breve",
-		time: item.time ?? "19:30",
-		cover:
-			item.cover ??
-			item.banner ??
-			"https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=1200&auto=format&fit=crop",
-		description:
-			item.description ??
-			"Evento em cartaz com catálogo externo integrado.",
-		organizer: item.organizer ?? "TicketFlow",
-		price: Number(item.price ?? 0),
-		seatMap:
-			item.seatMap ??
-			(normalizedType === "cinema" || normalizedType === "theater"
-				? "grid"
-				: "standard"),
-		ticketTypes:
-			Array.isArray(item.ticketTypes) && item.ticketTypes.length > 0
-				? item.ticketTypes.map((ticket: any) => ({
-						name: ticket.name ?? "Ingresso",
-						price: Number(ticket.price ?? item.price ?? 0),
-						available: Number(ticket.available ?? 100),
-					}))
-				: [
-						{
-							name: "Ingresso",
-							price: Number(item.price ?? 0),
-							available: 100,
-						},
-					],
-	};
-}
-
-async function fetchCatalogEvents(): Promise<EventItem[]> {
-	const apiBaseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
-	const response = await fetch(`${apiBaseUrl}/api/catalog`);
-
-	if (!response.ok) {
-		throw new Error("Failed to fetch catalog");
-	}
-
-	const data = await response.json();
-	const items = Array.isArray(data?.items) ? data.items : [];
-	return items.map(normalizeCatalogEvent);
-}
-
 function ClientHome({ events }: { events: EventItem[] }) {
 	const navigate = useNavigate();
-
 	return (
 		<HomeScreen
 			events={events}
@@ -233,7 +66,6 @@ function ClientHome({ events }: { events: EventItem[] }) {
 
 function ClientSearch({ events }: { events: EventItem[] }) {
 	const navigate = useNavigate();
-
 	return (
 		<SearchScreen
 			events={events}
@@ -249,10 +81,8 @@ function ClientSearch({ events }: { events: EventItem[] }) {
 
 function ClientTickets() {
 	const navigate = useNavigate();
-
 	return (
 		<MyTicketsScreen
-			tickets={MY_TICKETS}
 			onSelectTicket={(ticket) => navigate(`/client/ticket/${ticket.id}`)}
 			onNavigate={(dest) => {
 				if (dest === "home") navigate("/client");
@@ -266,9 +96,21 @@ function ClientTickets() {
 function ClientTicketDetail() {
 	const { ticketId } = useParams();
 	const navigate = useNavigate();
-	const ticket = MY_TICKETS.find((item) => item.id === ticketId);
+	const [ticket, setTicket] = useState<ApiTicket | null>(null);
+	const [notFound, setNotFound] = useState(false);
 
-	if (!ticket) return <Navigate to="/client/tickets" replace />;
+	useEffect(() => {
+		if (!ticketId) return;
+		fetchTicketById(ticketId)
+			.then(setTicket)
+			.catch(() => setNotFound(true));
+	}, [ticketId]);
+
+	if (notFound) return <Navigate to="/client/tickets" replace />;
+	if (!ticket)
+		return (
+			<div className="p-8 text-center text-neutral-400">Carregando…</div>
+		);
 
 	return (
 		<TicketDetailScreen
@@ -282,7 +124,6 @@ function ClientEventDetail({ events }: { events: EventItem[] }) {
 	const { eventId } = useParams();
 	const navigate = useNavigate();
 	const event = events.find((item) => item.id === eventId);
-
 	if (!event) return <Navigate to="/client" replace />;
 
 	if (event.seatMap === "grid") {
@@ -331,16 +172,22 @@ function ClientPayment() {
 	const navigate = useNavigate();
 	const location = useLocation() as { state?: { order: any } };
 	const order = location.state?.order;
-
 	if (!order)
 		return (
 			<Navigate to={`/client/event/${eventId ?? "unknown"}`} replace />
 		);
 
+	async function handleBack() {
+		if (order.seatIds?.length) {
+			await releaseSeats(order.event.id, order.seatIds).catch(() => {});
+		}
+		navigate(`/client/event/${eventId}`);
+	}
+
 	return (
 		<PaymentScreen
 			order={order}
-			onBack={() => navigate(`/client/event/${eventId}`)}
+			onBack={handleBack}
 			onReview={(nextOrder) =>
 				navigate("/client/event/confirm", {
 					state: { order: nextOrder },
@@ -354,19 +201,17 @@ function ClientConfirmPayment() {
 	const navigate = useNavigate();
 	const location = useLocation() as { state?: { order: any } };
 	const order = location.state?.order;
-
 	if (!order) return <Navigate to="/client" replace />;
 
 	return (
 		<ConfirmPaymentScreen
 			order={order}
 			onBack={() => navigate("/client")}
-			onConfirm={() => {
-				const paymentApproved = Math.random() < 0.8;
+			onConfirm={(result) =>
 				navigate("/client/tickets/confirmed", {
-					state: { order, paymentApproved },
-				});
-			}}
+					state: { order, result },
+				})
+			}
 		/>
 	);
 }
@@ -374,17 +219,20 @@ function ClientConfirmPayment() {
 function ClientTicketConfirmed() {
 	const navigate = useNavigate();
 	const location = useLocation() as {
-		state?: { order: any; paymentApproved?: boolean };
+		state?: {
+			order: any;
+			result: import("../features/checkout/checkoutApi").CheckoutResult;
+		};
 	};
 	const order = location.state?.order;
-	const paymentApproved = location.state?.paymentApproved ?? true;
-
-	if (!order) return <Navigate to="/client" replace />;
+	const result = location.state?.result;
+	if (!order || !result) return <Navigate to="/client" replace />;
 
 	return (
 		<TicketConfirmedScreen
-			order={order}
-			paymentApproved={paymentApproved}
+			eventTitle={order.event.title}
+			total={order.total}
+			result={result}
 			onViewTickets={() => navigate("/client/tickets")}
 			onHome={() => navigate("/client")}
 		/>
@@ -415,10 +263,8 @@ function ClientRoutes({ events }: { events: EventItem[] }) {
 
 function OrganizerHome() {
 	const navigate = useNavigate();
-
 	return (
 		<MyEventsScreen
-			events={ORGANIZER_EVENTS}
 			onEdit={(event) =>
 				navigate(`/organizer/events/${event.id}/edit`, {
 					state: { event },
@@ -438,7 +284,6 @@ function OrganizerHome() {
 
 function OrganizerCreateEvent() {
 	const navigate = useNavigate();
-
 	return (
 		<EventFormScreen
 			onBack={() => navigate("/organizer")}
@@ -449,15 +294,12 @@ function OrganizerCreateEvent() {
 
 function OrganizerEditEvent() {
 	const navigate = useNavigate();
-	const location = useLocation() as { state?: { event?: any } };
 	const { eventId } = useParams();
-	const eventFromList =
-		ORGANIZER_EVENTS.find((item) => item.id === eventId) ??
-		location.state?.event;
+	if (!eventId) return <Navigate to="/organizer" replace />;
 
 	return (
 		<EventFormScreen
-			event={eventFromList}
+			eventId={eventId}
 			onBack={() => navigate("/organizer")}
 			onSave={() => navigate("/organizer")}
 		/>
@@ -466,47 +308,34 @@ function OrganizerEditEvent() {
 
 function OrganizerProfile() {
 	const navigate = useNavigate();
-
 	return (
 		<OrganizerProfileScreen
-			organizer={{
-				name: "T4F Entretenimento",
-				description:
-					"Produtora líder em entretenimento ao vivo no Brasil.",
-			}}
 			onBack={() => navigate("/organizer")}
 			onSave={() => navigate("/organizer")}
 		/>
 	);
 }
 
-function OrganizerGateRegister({
-	onCreate,
-}: {
-	onCreate: (user: AppUser) => { ok: boolean; message?: string };
-}) {
+function OrganizerGateRegister() {
 	const navigate = useNavigate();
+	const location = useLocation() as {
+		state?: { event?: { id: string; title: string } };
+	};
 	const { eventId } = useParams();
-	const event = ORGANIZER_EVENTS.find((item) => item.id === eventId);
-
-	if (!event) {
-		return <Navigate to="/organizer" replace />;
-	}
+	const event =
+		location.state?.event ??
+		(eventId ? { id: eventId, title: "Evento" } : undefined);
+	if (!event) return <Navigate to="/organizer" replace />;
 
 	return (
 		<GateRegistrationPage
-			event={{ id: event.id, title: event.title }}
-			onCreate={onCreate}
+			event={event}
 			onBack={() => navigate("/organizer")}
 		/>
 	);
 }
 
-function OrganizerRoutes({
-	onGateCreate,
-}: {
-	onGateCreate: (user: AppUser) => { ok: boolean; message?: string };
-}) {
+function OrganizerRoutes() {
 	return (
 		<Routes>
 			<Route path="" element={<OrganizerHome />} />
@@ -517,7 +346,7 @@ function OrganizerRoutes({
 			/>
 			<Route
 				path="events/:eventId/porteiro"
-				element={<OrganizerGateRegister onCreate={onGateCreate} />}
+				element={<OrganizerGateRegister />}
 			/>
 			<Route path="profile" element={<OrganizerProfile />} />
 			<Route path="*" element={<Navigate to="/organizer" replace />} />
@@ -525,38 +354,61 @@ function OrganizerRoutes({
 	);
 }
 
-function GateValidate({ currentUser }: { currentUser: AppUser | null }) {
+function GateValidate() {
 	const navigate = useNavigate();
+	const [submitting, setSubmitting] = useState(false);
+
+	async function handleValidate(code: string) {
+		setSubmitting(true);
+		try {
+			const result = await validateByCode(code);
+			navigate("/gate/result", {
+				state: {
+					status: normalizeGateStatus(result.status),
+					ticket: result.ticket,
+				},
+			});
+		} catch (err) {
+			navigate("/gate/result", {
+				state: { status: "invalid", ticket: { code } },
+			});
+		} finally {
+			setSubmitting(false);
+		}
+	}
 
 	return (
 		<ValidateTicketScreen
-			testCodes={GATE_TICKETS.map((item) => ({
-				code: item.code,
-				status: item.status,
-			}))}
-			onValidate={(code) => {
-				const result = resolveGateValidation(code, currentUser);
-				navigate("/gate/result", { state: result });
-			}}
+			onValidate={handleValidate}
 			onScanQr={() => navigate("/gate/scan")}
+			submitting={submitting}
 		/>
 	);
 }
 
-function GateScan({ currentUser }: { currentUser: AppUser | null }) {
+function GateScan() {
 	const navigate = useNavigate();
+
+	async function handleDetected(token: string) {
+		try {
+			const result = await validateByQrToken(token);
+			navigate("/gate/result", {
+				state: {
+					status: normalizeGateStatus(result.status),
+					ticket: result.ticket,
+				},
+			});
+		} catch {
+			navigate("/gate/result", {
+				state: { status: "invalid", ticket: {} },
+			});
+		}
+	}
 
 	return (
 		<QrScanScreen
-			backgroundImage="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=800&auto=format&fit=crop"
 			onCancel={() => navigate("/gate")}
-			onScan={() => {
-				const result = resolveGateValidation(
-					"TKT-WKND-2401",
-					currentUser,
-				);
-				navigate("/gate/result", { state: result });
-			}}
+			onDetected={handleDetected}
 		/>
 	);
 }
@@ -570,7 +422,7 @@ function GateResult() {
 		};
 	};
 	const status = location.state?.status ?? "invalid";
-	const ticket = location.state?.ticket ?? { code: "TKT-INVALID-99" };
+	const ticket = location.state?.ticket ?? { code: "—" };
 
 	return (
 		<ValidationResultScreen
@@ -582,17 +434,11 @@ function GateResult() {
 	);
 }
 
-function GateRoutes({ currentUser }: { currentUser: AppUser | null }) {
+function GateRoutes() {
 	return (
 		<Routes>
-			<Route
-				path=""
-				element={<GateValidate currentUser={currentUser} />}
-			/>
-			<Route
-				path="scan"
-				element={<GateScan currentUser={currentUser} />}
-			/>
+			<Route path="" element={<GateValidate />} />
+			<Route path="scan" element={<GateScan />} />
 			<Route path="result" element={<GateResult />} />
 			<Route path="*" element={<Navigate to="/gate" replace />} />
 		</Routes>
@@ -600,25 +446,19 @@ function GateRoutes({ currentUser }: { currentUser: AppUser | null }) {
 }
 
 export default function AppRouter() {
-	const [users, setUsers] = useState<AppUser[]>(DEMO_USERS);
-	const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+	const { user, loading } = useAuth();
 	const [events, setEvents] = useState<EventItem[]>(EVENTS);
 
 	useEffect(() => {
 		let isMounted = true;
 
-		fetchCatalogEvents()
-			.then((catalogEvents) => {
-				if (isMounted) {
-					setEvents(
-						catalogEvents.length > 0 ? catalogEvents : EVENTS,
-					);
-				}
+		fetchPublishedEvents()
+			.then((realEvents) => {
+				if (isMounted)
+					setEvents(realEvents.length > 0 ? realEvents : EVENTS);
 			})
 			.catch(() => {
-				if (isMounted) {
-					setEvents(EVENTS);
-				}
+				if (isMounted) setEvents(EVENTS);
 			});
 
 		return () => {
@@ -626,114 +466,87 @@ export default function AppRouter() {
 		};
 	}, []);
 
-	const handleLogin = (user: AppUser) => setCurrentUser(user);
-	const handleRegister = (user: AppUser) => {
-		const exists = users.some(
-			(entry) => entry.email.toLowerCase() === user.email.toLowerCase(),
+	if (loading) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-neutral-950 text-neutral-400">
+				Carregando...
+			</div>
 		);
-
-		if (exists) {
-			return { ok: false, message: "Este e-mail já está cadastrado." };
-		}
-
-		setUsers((current) => [...current, user]);
-		setCurrentUser(user);
-		return { ok: true };
-	};
+	}
 
 	return (
-		<div className="min-h-screen bg-neutral-950 px-3 py-4 sm:px-6 lg:px-8">
-			<div className="mx-auto flex w-full max-w-6xl flex-col overflow-hidden rounded-[1.5rem] border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/30 sm:rounded-[2rem]">
-				<Routes>
-					<Route
-						path="/"
-						element={
-							<Navigate
-								to={
-									currentUser
-										? getRoleRoot(currentUser.role)
-										: "/login"
-								}
-								replace
-							/>
-						}
-					/>
-					<Route
-						path="/login"
-						element={
-							currentUser ? (
-								<Navigate
-									to={getRoleRoot(currentUser.role)}
-									replace
-								/>
-							) : (
-								<LoginPage
-									users={users}
-									onLogin={handleLogin}
-								/>
-							)
-						}
-					/>
-					<Route
-						path="/register"
-						element={
-							currentUser ? (
-								<Navigate
-									to={getRoleRoot(currentUser.role)}
-									replace
-								/>
-							) : (
-								<RegisterPage onRegister={handleRegister} />
-							)
-						}
-					/>
-					<Route
-						path="/client/*"
-						element={
-							currentUser && currentUser.role === "CLIENT" ? (
-								<ClientRoutes events={events} />
-							) : (
-								<Navigate to="/login" replace />
-							)
-						}
-					/>
-					<Route
-						path="/organizer/*"
-						element={
-							currentUser && currentUser.role === "ORGANIZER" ? (
-								<OrganizerRoutes
-									onGateCreate={handleRegister}
-								/>
-							) : (
-								<Navigate to="/login" replace />
-							)
-						}
-					/>
-					<Route
-						path="/gate/*"
-						element={
-							currentUser && currentUser.role === "GATE" ? (
-								<GateRoutes currentUser={currentUser} />
-							) : (
-								<Navigate to="/login" replace />
-							)
-						}
-					/>
-					<Route
-						path="*"
-						element={
-							<Navigate
-								to={
-									currentUser
-										? getRoleRoot(currentUser.role)
-										: "/login"
-								}
-								replace
-							/>
-						}
-					/>
-				</Routes>
-			</div>
+		<div className="min-h-screen bg-neutral-950">
+			<Routes>
+				<Route
+					path="/"
+					element={
+						<Navigate
+							to={user ? getRoleRoot(user.role) : "/login"}
+							replace
+						/>
+					}
+				/>
+				<Route
+					path="/login"
+					element={
+						user ? (
+							<Navigate to={getRoleRoot(user.role)} replace />
+						) : (
+							<LoginPage />
+						)
+					}
+				/>
+				<Route
+					path="/register"
+					element={
+						user ? (
+							<Navigate to={getRoleRoot(user.role)} replace />
+						) : (
+							<RegisterPage />
+						)
+					}
+				/>
+				<Route
+					path="/client/*"
+					element={
+						user?.role === "CLIENT" ? (
+							<ClientRoutes events={events} />
+						) : (
+							<Navigate to="/login" replace />
+						)
+					}
+				/>
+				<Route
+					path="/organizer/*"
+					element={
+						user?.role === "ORGANIZER" ? (
+							<OrganizerRoutes />
+						) : (
+							<Navigate to="/login" replace />
+						)
+					}
+				/>
+				<Route
+					path="/gate/*"
+					element={
+						user?.role === "GATE" ? (
+							<GateRoutes />
+						) : (
+							<Navigate to="/login" replace />
+						)
+					}
+				/>
+				<Route
+					path="*"
+					element={
+						<Navigate
+							to={user ? getRoleRoot(user.role) : "/login"}
+							replace
+						/>
+					}
+				/>
+				<Route path="/t/:shareToken" element={<SharedTicketScreen />} />
+			</Routes>
 		</div>
 	);
 }

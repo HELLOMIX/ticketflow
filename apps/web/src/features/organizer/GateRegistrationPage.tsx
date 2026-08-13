@@ -1,9 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-	createGatekeeper,
-	extractApiErrorMessage,
-} from "../organizer/organizerApi";
+import { createGatekeeper, extractApiErrorMessage } from "./organizerApi";
 
 type Props = {
 	event: { id: string; title: string };

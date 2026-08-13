@@ -1,61 +1,64 @@
+import { useEffect, useRef, useState } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 import { BackHeader } from "../../components/ui/Header";
 
-type QrScanScreenProps = {
-	backgroundImage: string;
+type Props = {
 	onCancel: () => void;
-	onScan: () => void;
+	onDetected: (token: string) => void;
 };
 
-export default function QrScanScreen({
-	backgroundImage,
-	onCancel,
-	onScan,
-}: QrScanScreenProps) {
+const SCANNER_ELEMENT_ID = "qr-scanner-region";
+
+export default function QrScanScreen({ onCancel, onDetected }: Props) {
+	const scannerRef = useRef<Html5Qrcode | null>(null);
+	const [error, setError] = useState<string | null>(null);
+	const detectedRef = useRef(false); // evita disparar onDetected mais de uma vez pro mesmo frame
+
+	useEffect(() => {
+		const scanner = new Html5Qrcode(SCANNER_ELEMENT_ID);
+		scannerRef.current = scanner;
+
+		scanner
+			.start(
+				{ facingMode: "environment" },
+				{ fps: 10, qrbox: { width: 240, height: 240 } },
+				(decodedText) => {
+					if (detectedRef.current) return;
+					detectedRef.current = true;
+					onDetected(decodedText);
+				},
+				() => {
+					// erro de leitura por frame (nenhum QR encontrado) — ignorado de propósito, é o comportamento normal
+				},
+			)
+			.catch(() =>
+				setError(
+					"Não foi possível acessar a câmera. Verifique as permissões do navegador.",
+				),
+			);
+
+		return () => {
+			scanner.stop().catch(() => {});
+		};
+	}, [onDetected]);
+
 	return (
 		<div className="flex h-full flex-col bg-neutral-950">
 			<BackHeader title="Escanear QR Code" onBack={onCancel} />
-
 			<div className="relative flex-1 overflow-hidden">
 				<div
-					className="absolute inset-0 bg-cover bg-center"
-					style={{
-						backgroundImage: `url(${backgroundImage})`,
-						filter: "brightness(0.52)",
-					}}
+					id={SCANNER_ELEMENT_ID}
+					className="h-full w-full [&>video]:h-full [&>video]:w-full [&>video]:object-cover"
 				/>
-				<div className="absolute inset-0 bg-black/40" />
 
-				<div className="relative z-10 flex h-full flex-col items-center justify-center px-6">
-					<div className="relative h-56 w-56 rounded-2xl border-4 border-amber-400/80 bg-black/20 backdrop-blur-[1px]">
-						<div className="absolute inset-4 rounded-xl border border-dashed border-white/80" />
-						<div className="absolute left-6 right-6 top-1/2 h-px -translate-y-1/2 bg-white/70" />
+				{error && (
+					<div className="absolute inset-x-4 top-4 rounded-xl bg-red-950/90 px-4 py-3 text-sm text-red-300">
+						{error}
 					</div>
+				)}
 
-					<div className="mt-6 text-center">
-						<p className="text-sm font-medium text-white">
-							Posicione o QR Code no centro da tela
-						</p>
-						<p className="mt-2 text-xs text-neutral-300">
-							A validação será feita automaticamente
-						</p>
-					</div>
-
-					<div className="mt-8 flex w-full gap-3">
-						<button
-							type="button"
-							onClick={onCancel}
-							className="flex-1 rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-semibold text-white"
-						>
-							Cancelar
-						</button>
-						<button
-							type="button"
-							onClick={onScan}
-							className="flex-1 rounded-xl bg-amber-400 px-4 py-3 text-sm font-bold text-neutral-950"
-						>
-							Validar
-						</button>
-					</div>
+				<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+					<div className="h-56 w-56 rounded-2xl border-4 border-amber-400/80" />
 				</div>
 			</div>
 		</div>

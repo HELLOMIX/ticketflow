@@ -1,15 +1,15 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import type { AppRole, AppUser } from "./LoginPage";
+import { useAuth, type AppRole } from "./AuthContext";
 
-type RegisterPageProps = {
-	onRegister: (user: AppUser) => { ok: boolean; message?: string };
-};
+const roleOptions: Array<Extract<AppRole, "CLIENT" | "ORGANIZER">> = [
+	"CLIENT",
+	"ORGANIZER",
+];
 
-const roleOptions: AppRole[] = ["CLIENT", "ORGANIZER"];
-
-export default function RegisterPage({ onRegister }: RegisterPageProps) {
+export default function RegisterPage() {
 	const navigate = useNavigate();
+	const { register } = useAuth();
 	const [form, setForm] = useState({
 		name: "",
 		email: "",
@@ -17,37 +17,28 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 		cpf: "",
 		phone: "",
 		birthDate: "",
-		role: "CLIENT" as AppRole,
+		role: "CLIENT" as "CLIENT" | "ORGANIZER",
 	});
 	const [error, setError] = useState("");
+	const [submitting, setSubmitting] = useState(false);
 
 	function handleChange(field: keyof typeof form, value: string) {
 		setForm((current) => ({ ...current, [field]: value }));
 	}
 
-	function handleSubmit(event: FormEvent) {
+	async function handleSubmit(event: FormEvent) {
 		event.preventDefault();
+		setSubmitting(true);
+		const result = await register(form);
+		setSubmitting(false);
 
-		const user: AppUser = {
-			id: crypto.randomUUID(),
-			name: form.name,
-			email: form.email,
-			password: form.password,
-			cpf: form.cpf,
-			phone: form.phone,
-			birthDate: form.birthDate,
-			role: form.role,
-			assignedEventIds: form.role === "GATE" ? ["the-weeknd"] : [],
-		};
-
-		const result = onRegister(user);
 		if (!result.ok) {
-			setError(result.message ?? "Não foi possível concluir o cadastro.");
+			setError(result.message);
 			return;
 		}
 
 		setError("");
-		navigate(`/${form.role.toLowerCase()}`);
+		navigate(`/${result.user.role.toLowerCase()}`);
 	}
 
 	return (
@@ -71,8 +62,8 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 							<input
 								required
 								value={form.name}
-								onChange={(event) =>
-									handleChange("name", event.target.value)
+								onChange={(e) =>
+									handleChange("name", e.target.value)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>
@@ -86,8 +77,8 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 								type="email"
 								required
 								value={form.email}
-								onChange={(event) =>
-									handleChange("email", event.target.value)
+								onChange={(e) =>
+									handleChange("email", e.target.value)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>
@@ -100,9 +91,10 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 							<input
 								type="password"
 								required
+								minLength={6}
 								value={form.password}
-								onChange={(event) =>
-									handleChange("password", event.target.value)
+								onChange={(e) =>
+									handleChange("password", e.target.value)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>
@@ -115,8 +107,8 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 							<input
 								required
 								value={form.cpf}
-								onChange={(event) =>
-									handleChange("cpf", event.target.value)
+								onChange={(e) =>
+									handleChange("cpf", e.target.value)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>
@@ -128,8 +120,8 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 							</span>
 							<input
 								value={form.phone}
-								onChange={(event) =>
-									handleChange("phone", event.target.value)
+								onChange={(e) =>
+									handleChange("phone", e.target.value)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>
@@ -142,11 +134,8 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 							<input
 								type="date"
 								value={form.birthDate}
-								onChange={(event) =>
-									handleChange(
-										"birthDate",
-										event.target.value,
-									)
+								onChange={(e) =>
+									handleChange("birthDate", e.target.value)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>
@@ -181,9 +170,10 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 
 					<button
 						type="submit"
-						className="w-full rounded-xl bg-red-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-400"
+						disabled={submitting}
+						className="w-full rounded-xl bg-red-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-red-400 disabled:opacity-50"
 					>
-						Cadastrar
+						{submitting ? "Cadastrando..." : "Cadastrar"}
 					</button>
 				</form>
 

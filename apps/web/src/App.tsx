@@ -1,6 +1,11 @@
 import "./App.css";
 import AppRouter from "./app/router";
+import { AppProviders } from "./app/providers";
 
 export default function App() {
-	return <AppRouter />;
+	return (
+		<AppProviders>
+			<AppRouter />
+		</AppProviders>
+	);
 }
