@@ -15,12 +15,15 @@ function accessCode() {
 }
 
 async function main() {
+<<<<<<< HEAD
 	const existingEvent = await prisma.event.findFirst();
 	if (existingEvent) {
 		console.log("Seed já aplicado anteriormente, pulando.");
 		return;
 	}
 
+=======
+>>>>>>> 9537621e1bcd97fb1a478806aaadc32d28f08e4b
 	const [organizerRole, clientRole, gateRole] = await Promise.all([
 		upsertRole("ORGANIZER"),
 		upsertRole("CLIENT"),
