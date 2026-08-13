@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	Navigate,
 	Route,
@@ -7,23 +7,28 @@ import {
 	useNavigate,
 	useParams,
 } from "react-router-dom";
-import HomeScreen from "../components/client/HomeScreen";
-import SearchScreen from "../components/client/SearchScreen";
-import EventDetailScreen from "../components/client/EventDetailScreen";
-import SeatMapCinemaScreen from "../components/client/SeatMapCinemaScreen";
-import SeatMapTheaterScreen from "../components/client/SeatMapTheaterScreen";
-import PaymentScreen from "../components/client/PaymentScreen";
-import ConfirmPaymentScreen from "../components/client/ConfirmPaymentScreen";
-import TicketConfirmedScreen from "../components/client/TicketConfirmedScreen";
-import MyTicketsScreen from "../components/client/MyTicketsScreen";
-import TicketDetailScreen from "../components/client/TicketDetailScreen";
-import MyEventsScreen from "../components/organizer/MyEventsScreen";
-import EventFormScreen from "../components/organizer/EventFormScreen";
-import OrganizerProfileScreen from "../components/organizer/OrganizerProfileScreen";
-import ValidateTicketScreen from "../components/porteiro/ValidateTicketScreen";
-import QrScanScreen from "../components/porteiro/QrScanScreen";
-import ValidationResultScreen from "../components/porteiro/ValidationResultScreen";
-import { EVENTS, MY_TICKETS, ORGANIZER_EVENTS } from "../components/mockData";
+import HomeScreen from "../features/events/HomeScreen";
+import SearchScreen from "../features/events/SearchScreen";
+import EventDetailScreen from "../features/events/EventDetailScreen";
+import SeatMapCinemaScreen from "../features/seat-map/SeatMapCinemaScreen";
+import SeatMapTheaterScreen from "../features/seat-map/SeatMapTheaterScreen";
+import PaymentScreen from "../features/checkout/PaymentScreen";
+import ConfirmPaymentScreen from "../features/checkout/ConfirmPaymentScreen";
+import TicketConfirmedScreen from "../features/checkout/TicketConfirmedScreen";
+import MyTicketsScreen from "../features/my-tickets/MyTicketsScreen";
+import TicketDetailScreen from "../features/my-tickets/TicketDetailScreen";
+import MyEventsScreen from "../features/organizer/MyEventsScreen";
+import EventFormScreen from "../features/organizer/EventFormScreen";
+import OrganizerProfileScreen from "../features/organizer/OrganizerProfileScreen";
+import ValidateTicketScreen from "../features/gate/ValidateTicketScreen";
+import QrScanScreen from "../features/gate/QrScanScreen";
+import ValidationResultScreen from "../features/gate/ValidationResultScreen";
+import {
+	EVENTS,
+	MY_TICKETS,
+	ORGANIZER_EVENTS,
+	type EventItem,
+} from "../components/mockData";
 import LoginPage, {
 	type AppRole,
 	type AppUser,
@@ -38,6 +43,7 @@ const DEMO_USERS: AppUser[] = [
 		email: "cliente@ticketflow.com",
 		password: "123456",
 		role: "CLIENT",
+		cpf: "123.456.789-00",
 		phone: "(11) 99999-0001",
 		birthDate: "1994-06-10",
 	},
@@ -47,6 +53,7 @@ const DEMO_USERS: AppUser[] = [
 		email: "organizador@ticketflow.com",
 		password: "123456",
 		role: "ORGANIZER",
+		cpf: "987.654.321-00",
 		phone: "(11) 98888-2222",
 		birthDate: "1988-02-15",
 	},
@@ -56,6 +63,7 @@ const DEMO_USERS: AppUser[] = [
 		email: "porteiro@ticketflow.com",
 		password: "123456",
 		role: "GATE",
+		cpf: "456.123.789-10",
 		phone: "(11) 97777-3333",
 		birthDate: "1992-11-28",
 		assignedEventIds: ["the-weeknd"],
@@ -142,12 +150,77 @@ function getRoleRoot(role: AppRole) {
 	return "/gate";
 }
 
-function ClientHome() {
+function normalizeCatalogEvent(item: any): EventItem {
+	const typeMap: Record<string, EventItem["type"]> = {
+		MOVIE: "cinema",
+		SHOW: "show",
+		THEATER: "theater",
+		FESTIVAL: "festival",
+		OTHER: "show",
+	};
+
+	const normalizedType =
+		typeMap[item.eventType ?? item.type ?? "SHOW"] ?? "show";
+
+	return {
+		id: String(item.id ?? crypto.randomUUID()),
+		type: normalizedType,
+		title: item.title ?? "Evento",
+		venue: item.venue ?? "Cinema TMDb",
+		city: item.city ?? "São Paulo",
+		dateLabel: item.dateLabel ?? "Em breve",
+		dateShort: item.dateShort ?? "Em breve",
+		time: item.time ?? "19:30",
+		cover:
+			item.cover ??
+			item.banner ??
+			"https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=1200&auto=format&fit=crop",
+		description:
+			item.description ??
+			"Evento em cartaz com catálogo externo integrado.",
+		organizer: item.organizer ?? "TicketFlow",
+		price: Number(item.price ?? 0),
+		seatMap:
+			item.seatMap ??
+			(normalizedType === "cinema" || normalizedType === "theater"
+				? "grid"
+				: "standard"),
+		ticketTypes:
+			Array.isArray(item.ticketTypes) && item.ticketTypes.length > 0
+				? item.ticketTypes.map((ticket: any) => ({
+						name: ticket.name ?? "Ingresso",
+						price: Number(ticket.price ?? item.price ?? 0),
+						available: Number(ticket.available ?? 100),
+					}))
+				: [
+						{
+							name: "Ingresso",
+							price: Number(item.price ?? 0),
+							available: 100,
+						},
+					],
+	};
+}
+
+async function fetchCatalogEvents(): Promise<EventItem[]> {
+	const apiBaseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+	const response = await fetch(`${apiBaseUrl}/api/catalog`);
+
+	if (!response.ok) {
+		throw new Error("Failed to fetch catalog");
+	}
+
+	const data = await response.json();
+	const items = Array.isArray(data?.items) ? data.items : [];
+	return items.map(normalizeCatalogEvent);
+}
+
+function ClientHome({ events }: { events: EventItem[] }) {
 	const navigate = useNavigate();
 
 	return (
 		<HomeScreen
-			events={EVENTS}
+			events={events}
 			onSelectEvent={(event) => navigate(`/client/event/${event.id}`)}
 			onNavigate={(dest) => {
 				if (dest === "search") navigate("/client/search");
@@ -158,12 +231,12 @@ function ClientHome() {
 	);
 }
 
-function ClientSearch() {
+function ClientSearch({ events }: { events: EventItem[] }) {
 	const navigate = useNavigate();
 
 	return (
 		<SearchScreen
-			events={EVENTS}
+			events={events}
 			onSelectEvent={(event) => navigate(`/client/event/${event.id}`)}
 			onNavigate={(dest) => {
 				if (dest === "home") navigate("/client");
@@ -205,10 +278,10 @@ function ClientTicketDetail() {
 	);
 }
 
-function ClientEventDetail() {
+function ClientEventDetail({ events }: { events: EventItem[] }) {
 	const { eventId } = useParams();
 	const navigate = useNavigate();
-	const event = EVENTS.find((item) => item.id === eventId);
+	const event = events.find((item) => item.id === eventId);
 
 	if (!event) return <Navigate to="/client" replace />;
 
@@ -318,14 +391,17 @@ function ClientTicketConfirmed() {
 	);
 }
 
-function ClientRoutes() {
+function ClientRoutes({ events }: { events: EventItem[] }) {
 	return (
 		<Routes>
-			<Route path="" element={<ClientHome />} />
-			<Route path="search" element={<ClientSearch />} />
+			<Route path="" element={<ClientHome events={events} />} />
+			<Route path="search" element={<ClientSearch events={events} />} />
 			<Route path="tickets" element={<ClientTickets />} />
 			<Route path="ticket/:ticketId" element={<ClientTicketDetail />} />
-			<Route path="event/:eventId" element={<ClientEventDetail />} />
+			<Route
+				path="event/:eventId"
+				element={<ClientEventDetail events={events} />}
+			/>
 			<Route path="event/:eventId/payment" element={<ClientPayment />} />
 			<Route path="event/confirm" element={<ClientConfirmPayment />} />
 			<Route
@@ -526,6 +602,29 @@ function GateRoutes({ currentUser }: { currentUser: AppUser | null }) {
 export default function AppRouter() {
 	const [users, setUsers] = useState<AppUser[]>(DEMO_USERS);
 	const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+	const [events, setEvents] = useState<EventItem[]>(EVENTS);
+
+	useEffect(() => {
+		let isMounted = true;
+
+		fetchCatalogEvents()
+			.then((catalogEvents) => {
+				if (isMounted) {
+					setEvents(
+						catalogEvents.length > 0 ? catalogEvents : EVENTS,
+					);
+				}
+			})
+			.catch(() => {
+				if (isMounted) {
+					setEvents(EVENTS);
+				}
+			});
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
 
 	const handleLogin = (user: AppUser) => setCurrentUser(user);
 	const handleRegister = (user: AppUser) => {
@@ -543,8 +642,8 @@ export default function AppRouter() {
 	};
 
 	return (
-		<div className="min-h-screen bg-neutral-950 py-6">
-			<div className="mx-auto flex w-full max-w-sm flex-col overflow-hidden rounded-[2rem] border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/30">
+		<div className="min-h-screen bg-neutral-950 px-3 py-4 sm:px-6 lg:px-8">
+			<div className="mx-auto flex w-full max-w-6xl flex-col overflow-hidden rounded-[1.5rem] border border-neutral-800 bg-neutral-950 shadow-2xl shadow-black/30 sm:rounded-[2rem]">
 				<Routes>
 					<Route
 						path="/"
@@ -592,7 +691,7 @@ export default function AppRouter() {
 						path="/client/*"
 						element={
 							currentUser && currentUser.role === "CLIENT" ? (
-								<ClientRoutes />
+								<ClientRoutes events={events} />
 							) : (
 								<Navigate to="/login" replace />
 							)
