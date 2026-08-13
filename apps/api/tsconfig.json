@@ -9,6 +9,9 @@
 		"skipLibCheck": true,
 		"resolveJsonModule": true
 	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "prisma.config.ts", "prisma/**"]
+	"include": ["src/**/*.ts", "src/**/*.tsx"],
+	"exclude": ["node_modules", "dist", "prisma.config.ts", "prisma/**"],
+	"ts-node": {
+		"files": true
+	}
 }
