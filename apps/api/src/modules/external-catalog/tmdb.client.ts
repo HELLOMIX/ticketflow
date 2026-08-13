@@ -1,7 +1,9 @@
 import "dotenv/config";
 
+import { env } from "../../config/env";
+
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-const TMDB_TOKEN = process.env.TMDB_BEARER_TOKEN ?? "sua chave api aqui";
+const TMDB_TOKEN = env.TMDB_BEARER_TOKEN;
 
 type TmdbMovie = {
 	id: number;

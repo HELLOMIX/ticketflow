@@ -1,10 +1,6 @@
-// ==========================================================
-// TicketFlow — schema.prisma
-// Baseado no modelo relacional original (SQLite)
-// ==========================================================
-
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -13,9 +9,6 @@ datasource db {
 
 // ------------------------------------------------------------
 // 1. Papéis de acesso
-// SQLite não suporta enum nativo no Prisma — os valores válidos
-// ('ORGANIZER' | 'CLIENT' | 'GATE') são validados na camada de
-// aplicação (ex.: zod) antes de qualquer escrita.
 // ------------------------------------------------------------
 model Role {
   id    Int    @id @default(autoincrement())
@@ -27,7 +20,7 @@ model Role {
 }
 
 // ------------------------------------------------------------
-// 2. Usuários (tabela unificada)
+// 2. Usuários
 // ------------------------------------------------------------
 model User {
   id                String   @id @default(uuid())
@@ -35,6 +28,7 @@ model User {
   name              String
   email             String   @unique
   passwordHash      String   @map("password_hash")
+  cpf               String   @unique
   phone             String?
   birthDate         String?  @map("birth_date") // YYYY-MM-DD
   profilePictureUrl String?  @map("profile_picture_url")
@@ -70,7 +64,7 @@ model Venue {
 }
 
 // ------------------------------------------------------------
-// 4. Assentos físicos do local (grid/mapa)
+// 4. Assentos físicos do local
 // ------------------------------------------------------------
 model Seat {
   id         String @id @default(uuid())
@@ -124,7 +118,7 @@ model Event {
 }
 
 // ------------------------------------------------------------
-// 6. Estado do assento por evento (mapa em tempo real)
+// 6. Estado do assento por evento
 // ------------------------------------------------------------
 model EventSeat {
   id                     String    @id @default(uuid())
@@ -145,7 +139,7 @@ model EventSeat {
 }
 
 // ------------------------------------------------------------
-// 7. Vínculo de porteiros ao evento (M:N)
+// 7. Vínculo de porteiros ao evento
 // ------------------------------------------------------------
 model EventGatekeeper {
   id           String   @id @default(uuid())
@@ -161,7 +155,7 @@ model EventGatekeeper {
 }
 
 // ------------------------------------------------------------
-// 8. Tipos de ingresso (configurados pelo organizador)
+// 8. Tipos de ingresso
 // ------------------------------------------------------------
 model TicketType {
   id                 String @id @default(uuid())
