@@ -58,7 +58,7 @@ export default function GateRegistrationPage({
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 text-white">
-			<div className="w-full max-w-lg rounded-[2rem] border border-neutral-800 bg-neutral-900 p-6 shadow-2xl shadow-black/40">
+			<div className="w-full max-w-lg rounded-[2rem] border border-neutral-800 bg-neutral-900 p-5 shadow-2xl shadow-black/40 sm:p-6 xl:max-w-2xl">
 				<div className="mb-6 text-center">
 					<p className="font-serif text-3xl font-bold text-red-500">
 						TicketFlow

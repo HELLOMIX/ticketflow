@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Button from "../ui/Button";
+import Button from "../../components/ui/Button";
 
 const STATUS_MAP = {
 	valid: { label: "Válido", icon: "✅", tone: "text-green-400" },

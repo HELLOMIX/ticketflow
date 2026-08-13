@@ -1,7 +1,7 @@
-import { AppHeader } from "../ui/Header";
-import { ClientBottomNav } from "../ui/BottomNav";
-import { EventTypeBadge } from "../ui/Badge";
-import type { EventItem } from "../mockData";
+import { AppHeader } from "../../components/ui/Header";
+import { ClientBottomNav } from "../../components/ui/BottomNav";
+import { EventTypeBadge } from "../../components/ui/Badge";
+import type { EventItem } from "../../components/mockData";
 
 function money(value: number) {
 	return `R$ ${value.toFixed(2).replace(".", ",")}`;

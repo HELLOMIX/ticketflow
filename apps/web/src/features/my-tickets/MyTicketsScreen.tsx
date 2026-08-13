@@ -1,7 +1,7 @@
-import { AppHeader } from "../ui/Header";
-import { ClientBottomNav } from "../ui/BottomNav";
-import Badge from "../ui/Badge";
-import type { MyTicket } from "../mockData";
+import { AppHeader } from "../../components/ui/Header";
+import { ClientBottomNav } from "../../components/ui/BottomNav";
+import Badge from "../../components/ui/Badge";
+import type { MyTicket } from "../../components/mockData";
 
 type MyTicketsScreenProps = {
 	tickets: MyTicket[];

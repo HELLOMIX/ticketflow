@@ -1,4 +1,4 @@
-import Button from "../ui/Button";
+import Button from "../../components/ui/Button";
 
 type ValidationResultScreenProps = {
 	status: "valid" | "used" | "invalid" | "wrong_event";

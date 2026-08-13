@@ -1,6 +1,6 @@
-import { OrganizerBottomNav } from "../ui/BottomNav";
-import Badge from "../ui/Badge";
-import type { OrganizerEvent } from "../mockData";
+import { OrganizerBottomNav } from "../../components/ui/BottomNav";
+import Badge from "../../components/ui/Badge";
+import type { OrganizerEvent } from "../../components/mockData";
 
 type MyEventsScreenProps = {
 	events: OrganizerEvent[];

@@ -1,4 +1,4 @@
-import { BackHeader } from "../ui/Header";
+import { BackHeader } from "../../components/ui/Header";
 
 type QrScanScreenProps = {
 	backgroundImage: string;

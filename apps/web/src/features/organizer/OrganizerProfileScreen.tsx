@@ -1,5 +1,5 @@
-import { BackHeader } from "../ui/Header";
-import Button from "../ui/Button";
+import { BackHeader } from "../../components/ui/Header";
+import Button from "../../components/ui/Button";
 
 type OrganizerProfileScreenProps = {
 	organizer: {

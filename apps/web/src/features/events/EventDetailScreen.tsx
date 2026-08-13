@@ -1,7 +1,7 @@
 import { useState } from "react";
-import Button from "../ui/Button";
-import { EventTypeBadge } from "../ui/Badge";
-import type { EventItem } from "../mockData";
+import Button from "../../components/ui/Button";
+import { EventTypeBadge } from "../../components/ui/Badge";
+import type { EventItem } from "../../components/mockData";
 
 function money(value: number) {
 	return `R$ ${value.toFixed(2).replace(".", ",")}`;

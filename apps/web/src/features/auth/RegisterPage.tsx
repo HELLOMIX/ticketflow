@@ -14,6 +14,7 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 		name: "",
 		email: "",
 		password: "",
+		cpf: "",
 		phone: "",
 		birthDate: "",
 		role: "CLIENT" as AppRole,
@@ -32,6 +33,7 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 			name: form.name,
 			email: form.email,
 			password: form.password,
+			cpf: form.cpf,
 			phone: form.phone,
 			birthDate: form.birthDate,
 			role: form.role,
@@ -50,7 +52,7 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 text-white">
-			<div className="w-full max-w-lg rounded-[2rem] border border-neutral-800 bg-neutral-900 p-6 shadow-2xl shadow-black/40">
+			<div className="w-full max-w-lg rounded-[2rem] border border-neutral-800 bg-neutral-900 p-5 shadow-2xl shadow-black/40 sm:p-6 xl:max-w-2xl">
 				<div className="mb-6 text-center">
 					<p className="font-serif text-3xl font-bold text-red-500">
 						TicketFlow
@@ -101,6 +103,20 @@ export default function RegisterPage({ onRegister }: RegisterPageProps) {
 								value={form.password}
 								onChange={(event) =>
 									handleChange("password", event.target.value)
+								}
+								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
+							/>
+						</label>
+
+						<label className="block md:col-span-2">
+							<span className="mb-2 block text-sm text-neutral-300">
+								CPF
+							</span>
+							<input
+								required
+								value={form.cpf}
+								onChange={(event) =>
+									handleChange("cpf", event.target.value)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>

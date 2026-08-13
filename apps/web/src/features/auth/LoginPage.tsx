@@ -8,6 +8,7 @@ export type AppUser = {
 	name: string;
 	email: string;
 	password: string;
+	cpf?: string;
 	role: AppRole;
 	phone?: string;
 	birthDate?: string;
@@ -52,7 +53,7 @@ export default function LoginPage({ users, onLogin }: LoginPageProps) {
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 py-10 text-white">
-			<div className="w-full max-w-md rounded-[2rem] border border-neutral-800 bg-neutral-900 p-6 shadow-2xl shadow-black/40">
+			<div className="w-full max-w-md rounded-[2rem] border border-neutral-800 bg-neutral-900 p-5 shadow-2xl shadow-black/40 sm:p-6 lg:max-w-lg">
 				<div className="mb-6 text-center">
 					<p className="font-serif text-3xl font-bold text-red-500">
 						TicketFlow

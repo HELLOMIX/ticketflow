@@ -1,7 +1,7 @@
-import { BackHeader } from "../ui/Header";
-import Button from "../ui/Button";
-import Badge from "../ui/Badge";
-import type { MyTicket } from "../mockData";
+import { BackHeader } from "../../components/ui/Header";
+import Button from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import type { MyTicket } from "../../components/mockData";
 
 type TicketDetailScreenProps = {
 	ticket: MyTicket;
