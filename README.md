@@ -40,11 +40,26 @@ tickets, gate, external-catalog). Frontend organizado por domínio em `apps/web/
 
 ### Pré-requisitos (Windows)
 
-O backend usa `better-sqlite3`, que exige compilação nativa. Se o `npm install` falhar
-com erro relacionado a `node-gyp`/`Visual Studio`, instale o
-[Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-com o workload **"Desktop development with C++"**, feche e reabra o terminal, e rode
-`npm install` novamente.
+O backend usa `better-sqlite3`, que exige compilação nativa (binding C++) na instalação.
+Se `npm install` dentro de `apps/api` falhar com erro de `node-gyp`/`Visual Studio`
+(`Could not find any Visual Studio installation to use`), siga estes passos:
+
+1. Instale o [Visual Studio Build Tools 2022](https://aka.ms/vs/17/release/vs_buildtools.exe)
+   com o workload **"Desenvolvimento para desktop com C++"** marcado na instalação.
+   > Se já tiver uma versão mais recente do Visual Studio instalada (2026+), o `node-gyp`
+   > pode não reconhecê-la ainda, instalar o 2022 em paralelo resolve, sem precisar
+   > remover a versão mais nova.
+2. Se instalou via `winget install -e --id Microsoft.VisualStudio.2022.BuildTools`, ele
+   **não inclui o workload de C++ por padrão**, mesmo relatando "já atualizado" em
+   tentativas seguintes. Force a adição do workload diretamente pelo instalador do VS:
+```powershell
+   & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --installPath "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools" --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --quiet --norestart
+```
+3. Feche e reabra o terminal (necessário para carregar as variáveis de ambiente novas).
+4. Rode a instalação apontando explicitamente para a versão do Visual Studio a usar:
+```bash
+   npm install --msvs_version=2022
+```
 
 ### 1. Backend
 
