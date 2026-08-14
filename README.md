@@ -38,6 +38,14 @@ tickets, gate, external-catalog). Frontend organizado por domínio em `apps/web/
 
 ## Como rodar localmente (sem Docker)
 
+### Pré-requisitos (Windows)
+
+O backend usa `better-sqlite3`, que exige compilação nativa. Se o `npm install` falhar
+com erro relacionado a `node-gyp`/`Visual Studio`, instale o
+[Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+com o workload **"Desktop development with C++"**, feche e reabra o terminal, e rode
+`npm install` novamente.
+
 ### 1. Backend
 
 ```bash
