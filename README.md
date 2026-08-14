@@ -127,7 +127,7 @@ vendidos).
 - **Cadastro de porteiro depende do organizador** Só é possivel cadastrar um porteiro quando o
   organizador tiver criado um evento e então fazer uma conta para o porteiro que estará viinculada à
   aquele evento, logo um porteiro não irá conseguir aprovar um ingresso que seja de outro evento.
-- **Backend em plano gratuito sem disco persistente pago** — para contornar isso sem custo,
+- **Backend em plano gratuito sem disco persistente pago** para contornar isso sem custo,
   o seed roda automaticamente e de forma idempotente a cada subida do container, garantindo
   dados de teste mesmo que o disco seja resetado.
 
