@@ -337,8 +337,11 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 									<input
 										value={catalogQuery}
 										onChange={(e) =>
-											setCatalogQuery(e.target.value)
+											setCatalogQuery(
+												e.target.value.slice(0, 100),
+											)
 										}
+										maxLength={100}
 										placeholder="Buscar filme no TMDb…"
 										className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-white placeholder:text-neutral-500"
 									/>
@@ -387,6 +390,7 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 								Nome do evento
 							</span>
 							<input
+								maxLength={100}
 								value={title}
 								onChange={(e) => setTitle(e.target.value)}
 								className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-white"
@@ -397,11 +401,19 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 							<span className="mb-2 block text-sm text-neutral-400">
 								Descrição
 							</span>
-							<textarea
-								value={description}
-								onChange={(e) => setDescription(e.target.value)}
-								className="min-h-[80px] w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-white"
-							/>
+							<div>
+								<textarea
+									maxLength={500}
+									value={description}
+									onChange={(e) =>
+										setDescription(e.target.value)
+									}
+									className="min-h-[80px] w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-white"
+								/>
+								<p className="mt-1 text-right text-[11px] text-neutral-600">
+									{description.length}/500
+								</p>
+							</div>
 						</label>
 
 						<label className="block">
@@ -483,6 +495,7 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 									Nome do local
 								</span>
 								<input
+									maxLength={100}
 									value={venueName}
 									onChange={(e) =>
 										setVenueName(e.target.value)
@@ -495,6 +508,7 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 									Endereço
 								</span>
 								<input
+									maxLength={150}
 									value={venueAddress}
 									onChange={(e) =>
 										setVenueAddress(e.target.value)
@@ -524,6 +538,7 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 										<input
 											type="number"
 											min={1}
+											max={50}
 											value={seatRows}
 											onChange={(e) =>
 												setSeatRows(e.target.value)
@@ -538,6 +553,7 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 										<input
 											type="number"
 											min={1}
+											max={50}
 											value={seatsPerRow}
 											onChange={(e) =>
 												setSeatsPerRow(e.target.value)
@@ -554,6 +570,7 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 									<input
 										type="number"
 										min={1}
+										max={100000}
 										value={totalCapacity}
 										onChange={(e) =>
 											setTotalCapacity(e.target.value)
@@ -600,7 +617,7 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 									</span>
 									<input
 										value={t.name}
-										disabled={isEditing}
+										maxLength={40}
 										onChange={(e) =>
 											updateTicketTypeField(
 												idx,
@@ -618,6 +635,8 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 									<input
 										type="number"
 										min={0}
+										max={100000}
+										step={0.01}
 										value={t.price}
 										onChange={(e) =>
 											updateTicketTypeField(
@@ -636,6 +655,7 @@ export default function EventFormScreen({ eventId, onBack, onSave }: Props) {
 									<input
 										type="number"
 										min={1}
+										max={100000}
 										value={t.quantityAvailable}
 										onChange={(e) =>
 											updateTicketTypeField(

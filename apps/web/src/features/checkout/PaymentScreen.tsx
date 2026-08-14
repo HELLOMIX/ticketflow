@@ -4,6 +4,11 @@ import { faLock } from "@fortawesome/free-solid-svg-icons";
 import { BackHeader } from "../../components/ui/Header";
 import Button from "../../components/ui/Button";
 import type { EventItem } from "../../components/mockData";
+import {
+	formatCardExpiry,
+	formatCardNumber,
+	formatCVV,
+} from "../../lib/inputMasks";
 
 function money(value: number) {
 	return `R$ ${value.toFixed(2).replace(".", ",")}`;
@@ -39,11 +44,6 @@ export default function PaymentScreen({
 		cvv: "",
 	});
 
-	const update =
-		(field: keyof typeof form) =>
-		(event: React.ChangeEvent<HTMLInputElement>) =>
-			setForm((current) => ({ ...current, [field]: event.target.value }));
-
 	const isValid = form.name && form.number && form.expiry && form.cvv;
 
 	return (
@@ -64,8 +64,14 @@ export default function PaymentScreen({
 					<Field label="Nome no cartão">
 						<input
 							value={form.name}
-							onChange={update("name")}
+							onChange={(e) =>
+								setForm((c) => ({
+									...c,
+									name: e.target.value.slice(0, 60),
+								}))
+							}
 							placeholder="João Silva"
+							maxLength={60}
 							className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-neutral-100 placeholder:text-neutral-500"
 						/>
 					</Field>
@@ -73,9 +79,15 @@ export default function PaymentScreen({
 					<Field label="Número do cartão">
 						<input
 							value={form.number}
-							onChange={update("number")}
+							onChange={(e) =>
+								setForm((c) => ({
+									...c,
+									number: formatCardNumber(e.target.value),
+								}))
+							}
 							placeholder="0000 0000 0000 0000"
 							inputMode="numeric"
+							maxLength={19}
 							className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-neutral-100 placeholder:text-neutral-500"
 						/>
 					</Field>
@@ -84,17 +96,32 @@ export default function PaymentScreen({
 						<Field label="Validade" className="flex-1">
 							<input
 								value={form.expiry}
-								onChange={update("expiry")}
+								onChange={(e) =>
+									setForm((c) => ({
+										...c,
+										expiry: formatCardExpiry(
+											e.target.value,
+										),
+									}))
+								}
 								placeholder="MM/AA"
+								inputMode="numeric"
+								maxLength={5}
 								className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-neutral-100 placeholder:text-neutral-500"
 							/>
 						</Field>
 						<Field label="CVV" className="flex-1">
 							<input
 								value={form.cvv}
-								onChange={update("cvv")}
+								onChange={(e) =>
+									setForm((c) => ({
+										...c,
+										cvv: formatCVV(e.target.value),
+									}))
+								}
 								placeholder="123"
 								inputMode="numeric"
+								maxLength={4}
 								className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-neutral-100 placeholder:text-neutral-500"
 							/>
 						</Field>

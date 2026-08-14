@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { BackHeader } from "../../components/ui/Header";
 import Button from "../../components/ui/Button";
 import { useAuth } from "../auth/AuthContext";
+import { formatPhone } from "../../lib/inputMasks";
 
 type Props = {
 	onBack: () => void;
@@ -90,6 +91,7 @@ export default function OrganizerProfileScreen({ onBack, onSave }: Props) {
 								Nome
 							</span>
 							<input
+								maxLength={100}
 								value={name}
 								onChange={(e) => setName(e.target.value)}
 								className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-white"
@@ -101,8 +103,13 @@ export default function OrganizerProfileScreen({ onBack, onSave }: Props) {
 								Telefone
 							</span>
 							<input
+								inputMode="numeric"
+								placeholder="(00) 00000-0000"
+								maxLength={15}
 								value={phone}
-								onChange={(e) => setPhone(e.target.value)}
+								onChange={(e) =>
+									setPhone(formatPhone(e.target.value))
+								}
 								className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-white"
 							/>
 						</label>

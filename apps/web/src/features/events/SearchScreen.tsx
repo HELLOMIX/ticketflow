@@ -49,7 +49,8 @@ export default function SearchScreen({
 				<input
 					type="text"
 					value={query}
-					onChange={(e) => setQuery(e.target.value)}
+					onChange={(e) => setQuery(e.target.value.slice(0, 100))}
+					maxLength={100}
 					placeholder="Buscar eventos"
 					className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 text-sm text-white placeholder:text-neutral-500 md:max-w-md"
 				/>

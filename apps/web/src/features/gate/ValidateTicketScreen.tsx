@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-	faCheck,
-	faCamera,
-	faQrcode,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faCamera, faQrcode } from "@fortawesome/free-solid-svg-icons";
 import Button from "../../components/ui/Button";
 import { useAuth } from "../auth/AuthContext";
+import { formatAccessCode } from "../../lib/inputMasks";
 
 type Props = {
 	onValidate: (code: string) => void;
@@ -56,8 +53,11 @@ export default function ValidateTicketScreen({
 						</label>
 						<input
 							value={code}
-							onChange={(e) => setCode(e.target.value)}
+							onChange={(e) =>
+								setCode(formatAccessCode(e.target.value))
+							}
 							placeholder="TKT-XXXXXXXX"
+							maxLength={20}
 							className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3.5 py-3 font-mono text-sm text-neutral-100 placeholder:text-neutral-500"
 						/>
 						<Button
@@ -70,8 +70,8 @@ export default function ValidateTicketScreen({
 								"Validando…"
 							) : (
 								<>
-									<FontAwesomeIcon icon={faCheck} />{" "}
-									Confirmar entrada
+									<FontAwesomeIcon icon={faCheck} /> Confirmar
+									entrada
 								</>
 							)}
 						</Button>

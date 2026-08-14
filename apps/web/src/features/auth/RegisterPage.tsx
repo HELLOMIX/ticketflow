@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth, type AppRole } from "./AuthContext";
+import { formatCPF, formatPhone } from "../../lib/inputMasks";
 
 const roleOptions: Array<Extract<AppRole, "CLIENT" | "ORGANIZER">> = [
 	"CLIENT",
@@ -61,6 +62,7 @@ export default function RegisterPage() {
 							</span>
 							<input
 								required
+								maxLength={100}
 								value={form.name}
 								onChange={(e) =>
 									handleChange("name", e.target.value)
@@ -76,6 +78,7 @@ export default function RegisterPage() {
 							<input
 								type="email"
 								required
+								maxLength={254}
 								value={form.email}
 								onChange={(e) =>
 									handleChange("email", e.target.value)
@@ -92,6 +95,7 @@ export default function RegisterPage() {
 								type="password"
 								required
 								minLength={6}
+								maxLength={72} // limite real do bcrypt — senha maior que isso é truncada silenciosamente no hash
 								value={form.password}
 								onChange={(e) =>
 									handleChange("password", e.target.value)
@@ -106,9 +110,15 @@ export default function RegisterPage() {
 							</span>
 							<input
 								required
+								inputMode="numeric"
+								placeholder="000.000.000-00"
+								maxLength={14}
 								value={form.cpf}
 								onChange={(e) =>
-									handleChange("cpf", e.target.value)
+									handleChange(
+										"cpf",
+										formatCPF(e.target.value),
+									)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>
@@ -119,9 +129,15 @@ export default function RegisterPage() {
 								Telefone
 							</span>
 							<input
+								inputMode="numeric"
+								placeholder="(00) 00000-0000"
+								maxLength={15}
 								value={form.phone}
 								onChange={(e) =>
-									handleChange("phone", e.target.value)
+									handleChange(
+										"phone",
+										formatPhone(e.target.value),
+									)
 								}
 								className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white"
 							/>

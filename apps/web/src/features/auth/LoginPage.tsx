@@ -44,10 +44,10 @@ export default function LoginPage() {
 						</span>
 						<input
 							type="email"
+							maxLength={254}
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 							className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white placeholder:text-neutral-500"
-							placeholder="seu@email.com"
 						/>
 					</label>
 
@@ -57,10 +57,10 @@ export default function LoginPage() {
 						</span>
 						<input
 							type="password"
+							maxLength={72}
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
 							className="w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3.5 py-3 text-sm text-white placeholder:text-neutral-500"
-							placeholder="••••••••"
 						/>
 					</label>
 
